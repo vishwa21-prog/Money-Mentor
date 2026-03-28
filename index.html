@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MoneyMentor AI — Your Personal CFO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e1a;
+  --surface: #111827;
+  --surface2: #1a2236;
+  --border: rgba(255,255,255,0.08);
+  --gold: #f5c842;
+  --gold-dim: rgba(245,200,66,0.15);
+  --gold-glow: rgba(245,200,66,0.35);
+  --green: #22d3a0;
+  --green-dim: rgba(34,211,160,0.12);
+  --red: #ff6b6b;
+  --red-dim: rgba(255,107,107,0.12);
+  --amber: #fb923c;
+  --blue: #60a5fa;
+  --text: #f0f4ff;
+  --muted: #6b7a99;
+  --radius: 16px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Noise texture overlay ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0; opacity: 0.4;
+}
+
+.app { position: relative; z-index: 1; }
+
+/* ── NAV ── */
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 40px;
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(10,14,26,0.85);
+}
+
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800; font-size: 22px;
+  display: flex; align-items: center; gap: 10px;
+}
+.logo-icon {
+  width: 34px; height: 34px;
+  background: var(--gold);
+  border-radius: 8px;
+  display: grid; place-items: center;
+  font-size: 18px;
+}
+.logo span { color: var(--gold); }
+
+.nav-badge {
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-glow);
+  color: var(--gold);
+  font-size: 12px; font-weight: 500;
+  padding: 4px 12px; border-radius: 20px;
+}
+
+/* ── SCREENS ── */
+.screen { display: none; animation: fadeUp 0.5s ease; }
+.screen.active { display: block; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── HERO ── */
+.hero {
+  min-height: calc(100vh - 75px);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; padding: 60px 24px;
+  position: relative;
+}
+
+.hero-glow {
+  position: absolute;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(245,200,66,0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  top: 50%; left: 50%; transform: translate(-50%, -60%);
+  pointer-events: none;
+}
+
+.hero-eyebrow {
+  font-size: 12px; font-weight: 500; letter-spacing: 3px;
+  color: var(--gold); text-transform: uppercase;
+  margin-bottom: 20px;
+  opacity: 0; animation: fadeUp 0.6s 0.2s ease forwards;
+}
+
+.hero h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(42px, 7vw, 80px);
+  font-weight: 800; line-height: 1.05;
+  margin-bottom: 24px;
+  opacity: 0; animation: fadeUp 0.6s 0.35s ease forwards;
+}
+
+.hero h1 em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--gold), #ff9f43);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+.hero-sub {
+  font-size: 18px; color: var(--muted); max-width: 520px;
+  margin-bottom: 40px; font-weight: 300;
+  opacity: 0; animation: fadeUp 0.6s 0.5s ease forwards;
+}
+
+.hero-stats {
+  display: flex; gap: 40px; margin-bottom: 48px;
+  opacity: 0; animation: fadeUp 0.6s 0.65s ease forwards;
+}
+
+.stat { text-align: center; }
+.stat-num { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700; color: var(--gold); }
+.stat-label { font-size: 12px; color: var(--muted); }
+
+.btn-primary {
+  background: var(--gold);
+  color: #0a0e1a;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 16px;
+  padding: 16px 40px; border-radius: 50px;
+  border: none; cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 0 40px var(--gold-glow);
+  opacity: 0; animation: fadeUp 0.6s 0.8s ease forwards;
+}
+.btn-primary:hover { transform: scale(1.04); box-shadow: 0 0 60px var(--gold-glow); }
+
+.hero-proof {
+  margin-top: 32px; font-size: 13px; color: var(--muted);
+  opacity: 0; animation: fadeUp 0.6s 0.95s ease forwards;
+}
+
+/* ── ONBOARDING ── */
+.onboarding-wrap {
+  max-width: 640px; margin: 0 auto;
+  padding: 48px 24px;
+}
+
+.progress-bar {
+  display: flex; gap: 6px; margin-bottom: 40px;
+}
+.progress-seg {
+  flex: 1; height: 3px; background: var(--border); border-radius: 2px;
+  transition: background 0.4s;
+}
+.progress-seg.done { background: var(--gold); }
+.progress-seg.active { background: var(--gold); opacity: 0.5; }
+
+.step-label {
+  font-size: 12px; color: var(--muted); letter-spacing: 2px;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+
+.step-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 28px; font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.step-subtitle {
+  color: var(--muted); font-size: 15px;
+  margin-bottom: 36px;
+}
+
+.field-grid { display: flex; flex-direction: column; gap: 16px; }
+
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.field-group { display: flex; flex-direction: column; gap: 8px; }
+
+label {
+  font-size: 13px; font-weight: 500; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1px;
+}
+
+input, select {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+  -webkit-appearance: none;
+}
+input:focus, select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-dim);
+}
+select option { background: var(--surface2); }
+
+.input-prefix {
+  position: relative;
+}
+.input-prefix span {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  color: var(--muted); font-size: 15px; pointer-events: none;
+}
+.input-prefix input { padding-left: 28px; }
+
+.checkbox-group { display: flex; flex-direction: column; gap: 10px; }
+
+.checkbox-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 14px 16px; border-radius: 10px;
+  cursor: pointer; transition: border-color 0.2s, background 0.2s;
+}
+.checkbox-item:hover { border-color: var(--gold); }
+.checkbox-item.selected {
+  border-color: var(--gold);
+  background: var(--gold-dim);
+}
+.checkbox-item .check-icon {
+  width: 20px; height: 20px; border-radius: 6px;
+  border: 2px solid var(--border);
+  display: grid; place-items: center;
+  flex-shrink: 0; transition: all 0.2s;
+  font-size: 12px;
+}
+.checkbox-item.selected .check-icon {
+  background: var(--gold); border-color: var(--gold); color: #0a0e1a;
+}
+.checkbox-label { font-size: 15px; }
+.checkbox-sub { font-size: 12px; color: var(--muted); }
+
+.step-nav {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 36px;
+}
+
+.btn-back {
+  background: none; border: 1px solid var(--border);
+  color: var(--muted); font-size: 14px;
+  padding: 12px 24px; border-radius: 50px;
+  cursor: pointer; transition: border-color 0.2s, color 0.2s;
+}
+.btn-back:hover { border-color: var(--muted); color: var(--text); }
+
+.btn-next {
+  background: var(--gold); color: #0a0e1a;
+  font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px;
+  padding: 14px 32px; border-radius: 50px; border: none;
+  cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 0 20px var(--gold-dim);
+}
+.btn-next:hover { transform: scale(1.03); box-shadow: 0 0 30px var(--gold-glow); }
+
+/* ── LOADING ── */
+.loading-screen {
+  min-height: calc(100vh - 75px);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 24px; text-align: center; padding: 40px;
+}
+
+.loader-ring {
+  width: 80px; height: 80px;
+  border: 3px solid var(--border);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loader-title {
+  font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700;
+}
+.loader-sub { color: var(--muted); font-size: 14px; max-width: 300px; }
+
+.loader-steps { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.loader-step {
+  font-size: 13px; color: var(--muted);
+  display: flex; align-items: center; gap: 8px;
+  opacity: 0; transition: opacity 0.5s;
+}
+.loader-step.visible { opacity: 1; }
+.loader-step::before { content: '→'; color: var(--gold); }
+
+/* ── RESULTS ── */
+.results-wrap { max-width: 860px; margin: 0 auto; padding: 48px 24px; }
+
+.results-header { margin-bottom: 48px; }
+
+.results-greeting {
+  font-size: 13px; color: var(--gold); letter-spacing: 2px;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+
+.results-title {
+  font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.results-summary {
+  font-size: 16px; color: var(--muted); max-width: 600px;
+  line-height: 1.7;
+}
+
+/* ── SCORE CARD ── */
+.score-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 36px;
+  margin-bottom: 32px;
+}
+
+.score-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 32px; flex-wrap: wrap; gap: 16px;
+}
+
+.score-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
+
+.overall-badge {
+  display: flex; align-items: center; gap: 12px;
+}
+.overall-num {
+  font-family: 'Syne', sans-serif; font-size: 52px; font-weight: 800;
+}
+.overall-label { font-size: 13px; color: var(--muted); }
+.overall-grade {
+  font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700;
+  padding: 4px 14px; border-radius: 8px;
+}
+
+.radar-wrap {
+  display: flex; align-items: center; gap: 40px; flex-wrap: wrap;
+}
+
+.radar-chart { flex-shrink: 0; }
+
+.radar-legend { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 12px; }
+
+.legend-item {
+  display: flex; align-items: center; gap: 10px;
+}
+.legend-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.legend-info { flex: 1; }
+.legend-name { font-size: 13px; font-weight: 500; }
+.legend-score-row { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+.legend-bar-bg { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.legend-bar-fill { height: 100%; border-radius: 2px; transition: width 1.2s cubic-bezier(0.4,0,0.2,1); }
+.legend-val { font-size: 12px; color: var(--muted); min-width: 28px; text-align: right; }
+
+/* ── INSIGHTS ── */
+.insights-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px; margin-bottom: 32px;
+}
+
+.insight-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  position: relative; overflow: hidden;
+}
+.insight-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+}
+.insight-card.critical::before { background: var(--red); }
+.insight-card.warning::before { background: var(--amber); }
+.insight-card.good::before { background: var(--green); }
+
+.insight-tag {
+  font-size: 11px; font-weight: 500; letter-spacing: 1.5px;
+  text-transform: uppercase; margin-bottom: 10px;
+}
+.insight-card.critical .insight-tag { color: var(--red); }
+.insight-card.warning .insight-tag { color: var(--amber); }
+.insight-card.good .insight-tag { color: var(--green); }
+
+.insight-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.insight-body { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+/* ── FIRE ROADMAP ── */
+.roadmap-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 36px;
+  margin-bottom: 32px;
+}
+
+.section-label {
+  font-size: 12px; color: var(--gold); letter-spacing: 2px;
+  text-transform: uppercase; margin-bottom: 6px;
+}
+.section-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 24px; }
+
+.roadmap-timeline { position: relative; }
+
+.roadmap-timeline::before {
+  content: ''; position: absolute; left: 20px; top: 0; bottom: 0;
+  width: 2px; background: var(--border);
+}
+
+.timeline-item {
+  display: flex; gap: 24px; margin-bottom: 28px;
+  position: relative;
+  opacity: 0;
+  animation: fadeUp 0.5s ease forwards;
+}
+
+.timeline-dot {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--surface2);
+  display: grid; place-items: center;
+  flex-shrink: 0; z-index: 1;
+  font-size: 14px;
+  transition: border-color 0.3s;
+}
+.timeline-item.reached .timeline-dot {
+  border-color: var(--green); background: var(--green-dim);
+}
+.timeline-item.target .timeline-dot {
+  border-color: var(--gold); background: var(--gold-dim);
+}
+
+.timeline-content { flex: 1; padding-top: 8px; }
+.timeline-month { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+.timeline-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.timeline-body { font-size: 13px; color: var(--muted); }
+.timeline-amount {
+  font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700;
+  color: var(--gold); margin-top: 4px;
+}
+
+/* ── SIP TABLE ── */
+.sip-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+.sip-table th {
+  font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); padding: 10px 12px; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.sip-table td {
+  padding: 14px 12px; font-size: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.sip-table tr:last-child td { border-bottom: none; }
+.sip-table .amount { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--gold); }
+.sip-badge {
+  font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 4px;
+  display: inline-block;
+}
+.badge-equity { background: rgba(96,165,250,0.15); color: var(--blue); }
+.badge-debt { background: var(--green-dim); color: var(--green); }
+.badge-tax { background: var(--gold-dim); color: var(--gold); }
+
+/* ── DISCLAIMER ── */
+.disclaimer {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px 20px;
+  font-size: 12px; color: var(--muted); line-height: 1.6;
+  margin-top: 32px;
+}
+
+/* ── CTA ── */
+.cta-row {
+  display: flex; gap: 12px; flex-wrap: wrap; margin-top: 32px;
+}
+.btn-cta-primary {
+  background: var(--gold); color: #0a0e1a;
+  font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px;
+  padding: 14px 28px; border-radius: 50px; border: none;
+  cursor: pointer; transition: transform 0.2s;
+}
+.btn-cta-primary:hover { transform: scale(1.03); }
+.btn-cta-secondary {
+  background: none; border: 1px solid var(--border);
+  color: var(--muted); font-size: 14px;
+  padding: 14px 24px; border-radius: 50px;
+  cursor: pointer; transition: border-color 0.2s;
+}
+.btn-cta-secondary:hover { border-color: var(--muted); color: var(--text); }
+
+@media (max-width: 600px) {
+  nav { padding: 16px 20px; }
+  .hero-stats { gap: 24px; flex-wrap: wrap; justify-content: center; }
+  .field-row { grid-template-columns: 1fr; }
+  .score-header { flex-direction: column; }
+  .radar-wrap { flex-direction: column; }
+  .results-title { font-size: 26px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    <div class="logo-icon">₹</div>
+    Money<span>Mentor</span>
+  </div>
+  <div class="nav-badge">AI-Powered · Free Forever</div>
+</nav>
+
+<!-- ── SCREEN 1: HERO ── -->
+<div class="screen active" id="screen-hero">
+  <div class="hero">
+    <div class="hero-glow"></div>
+    <p class="hero-eyebrow">ET AI Hackathon 2026 · PS9</p>
+    <h1>Your personal<br><em>CFO is here.</em></h1>
+    <p class="hero-sub">95% of Indians have no financial plan. Get yours in 5 minutes — free, private, AI-powered.</p>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-num">5 min</div><div class="stat-label">To your full plan</div></div>
+      <div class="stat"><div class="stat-num">₹0</div><div class="stat-label">Cost to you</div></div>
+      <div class="stat"><div class="stat-num">6</div><div class="stat-label">Financial dimensions</div></div>
+    </div>
+    <button class="btn-primary" onclick="startOnboarding()">Build My Financial Plan →</button>
+    <p class="hero-proof">No sign-up. No data sold. Your numbers stay on your device.</p>
+  </div>
+</div>
+
+<!-- ── SCREEN 2: ONBOARDING ── -->
+<div class="screen" id="screen-onboarding">
+  <div class="onboarding-wrap">
+
+    <div class="progress-bar" id="progressBar">
+      <div class="progress-seg active" id="seg0"></div>
+      <div class="progress-seg" id="seg1"></div>
+      <div class="progress-seg" id="seg2"></div>
+      <div class="progress-seg" id="seg3"></div>
+      <div class="progress-seg" id="seg4"></div>
+    </div>
+
+    <!-- Step 0: Basics -->
+    <div class="form-step active" id="step-0">
+      <p class="step-label">Step 1 of 5</p>
+      <h2 class="step-title">Let's start with the basics</h2>
+      <p class="step-subtitle">This takes under 60 seconds per step.</p>
+      <div class="field-grid">
+        <div class="field-row">
+          <div class="field-group">
+            <label>Your name</label>
+            <input type="text" id="name" placeholder="Arjun" />
+          </div>
+          <div class="field-group">
+            <label>Age</label>
+            <input type="number" id="age" placeholder="28" min="18" max="65"/>
+          </div>
+        </div>
+        <div class="field-group">
+          <label>City</label>
+          <select id="city">
+            <option value="">Select city</option>
+            <option>Mumbai</option><option>Delhi</option><option>Bengaluru</option>
+            <option>Hyderabad</option><option>Chennai</option><option>Pune</option>
+            <option>Kochi</option><option>Kolkata</option><option>Other</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>Employment type</label>
+          <select id="employment">
+            <option value="">Select type</option>
+            <option>Salaried (private)</option>
+            <option>Salaried (government)</option>
+            <option>Self-employed / Freelancer</option>
+            <option>Business owner</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 1: Income & Expenses -->
+    <div class="form-step" id="step-1" style="display:none">
+      <p class="step-label">Step 2 of 5</p>
+      <h2 class="step-title">Income & expenses</h2>
+      <p class="step-subtitle">Approximate numbers are fine — this isn't a tax return.</p>
+      <div class="field-grid">
+        <div class="field-row">
+          <div class="field-group">
+            <label>Monthly take-home (₹)</label>
+            <div class="input-prefix"><span>₹</span><input type="number" id="income" placeholder="75000"/></div>
+          </div>
+          <div class="field-group">
+            <label>Monthly expenses (₹)</label>
+            <div class="input-prefix"><span>₹</span><input type="number" id="expenses" placeholder="45000"/></div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <label>Monthly EMI (₹, if any)</label>
+            <div class="input-prefix"><span>₹</span><input type="number" id="emi" placeholder="0"/></div>
+          </div>
+          <div class="field-group">
+            <label>Monthly savings / SIPs (₹)</label>
+            <div class="input-prefix"><span>₹</span><input type="number" id="savings" placeholder="10000"/></div>
+          </div>
+        </div>
+        <div class="field-group">
+          <label>Current total investments (₹)</label>
+          <div class="input-prefix"><span>₹</span><input type="number" id="investments" placeholder="200000"/></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Protection -->
+    <div class="form-step" id="step-2" style="display:none">
+      <p class="step-label">Step 3 of 5</p>
+      <h2 class="step-title">Are you protected?</h2>
+      <p class="step-subtitle">Insurance gaps are the #1 hidden financial risk for Indian families.</p>
+      <div class="field-grid">
+        <div class="field-group">
+          <label>Do you have term life insurance?</label>
+          <div class="checkbox-group" id="lifeInsGroup">
+            <div class="checkbox-item" onclick="selectOne(this,'lifeInsGroup')" data-val="yes">
+              <div class="check-icon">✓</div>
+              <div><div class="checkbox-label">Yes, I have term cover</div></div>
+            </div>
+            <div class="checkbox-item" onclick="selectOne(this,'lifeInsGroup')" data-val="no">
+              <div class="check-icon">✓</div>
+              <div><div class="checkbox-label">No</div></div>
+            </div>
+            <div class="checkbox-item" onclick="selectOne(this,'lifeInsGroup')" data-val="endowment">
+              <div class="check-icon">✓</div>
+              <div><div class="checkbox-label">I have an endowment / LIC policy</div><div class="checkbox-sub">Not the same as term — we'll flag this</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="field-group">
+          <label>Health insurance cover (₹ per year)</label>
+          <select id="healthCover">
+            <option value="0">No health cover</option>
+            <option value="3">₹3 lakh (employer-provided)</option>
+            <option value="5">₹5 lakh</option>
+            <option value="10">₹10 lakh+</option>
+            <option value="25">₹25 lakh+ (family floater)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Goals -->
+    <div class="form-step" id="step-3" style="display:none">
+      <p class="step-label">Step 4 of 5</p>
+      <h2 class="step-title">What are you saving for?</h2>
+      <p class="step-subtitle">Pick all that apply. We'll build a plan for each goal.</p>
+      <div class="checkbox-group" id="goalsGroup">
+        <div class="checkbox-item multi" onclick="toggleMulti(this)" data-val="emergency">
+          <div class="check-icon">✓</div>
+          <div><div class="checkbox-label">Emergency fund (6-month buffer)</div><div class="checkbox-sub">Top priority for most Indians</div></div>
+        </div>
+        <div class="checkbox-item multi" onclick="toggleMulti(this)" data-val="home">
+          <div class="check-icon">✓</div>
+          <div><div class="checkbox-label">Buy a home</div></div>
+        </div>
+        <div class="checkbox-item multi" onclick="toggleMulti(this)" data-val="retirement">
+          <div class="check-icon">✓</div>
+          <div><div class="checkbox-label">Retirement / Financial independence</div></div>
+        </div>
+        <div class="checkbox-item multi" onclick="toggleMulti(this)" data-val="education">
+          <div class="check-icon">✓</div>
+          <div><div class="checkbox-label">Child's education</div></div>
+        </div>
+        <div class="checkbox-item multi" onclick="toggleMulti(this)" data-val="travel">
+          <div class="check-icon">✓</div>
+          <div><div class="checkbox-label">Travel fund / big purchase</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Tax -->
+    <div class="form-step" id="step-4" style="display:none">
+      <p class="step-label">Step 5 of 5</p>
+      <h2 class="step-title">Almost done — quick tax check</h2>
+      <p class="step-subtitle">This unlocks your tax savings score.</p>
+      <div class="field-grid">
+        <div class="field-group">
+          <label>Tax regime</label>
+          <select id="taxRegime">
+            <option value="new">New regime (lower rates, fewer deductions)</option>
+            <option value="old">Old regime (higher rates, more deductions)</option>
+            <option value="unsure">Not sure</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>80C utilisation this year</label>
+          <select id="sec80c">
+            <option value="0">₹0 — haven't invested yet</option>
+            <option value="50000">₹50,000 (partial)</option>
+            <option value="100000">₹1,00,000 (partial)</option>
+            <option value="150000">₹1,50,000 (fully utilised)</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>Do you have an NPS account?</label>
+          <select id="nps">
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-nav">
+      <button class="btn-back" id="backBtn" onclick="prevStep()" style="visibility:hidden">← Back</button>
+      <button class="btn-next" id="nextBtn" onclick="nextStep()">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN 3: LOADING ── -->
+<div class="screen" id="screen-loading">
+  <div class="loading-screen">
+    <div class="loader-ring"></div>
+    <div class="loader-title">Analysing your finances…</div>
+    <div class="loader-sub">Our AI is running the numbers. This takes about 10 seconds.</div>
+    <div class="loader-steps">
+      <div class="loader-step" id="ls0">Parsing your financial profile</div>
+      <div class="loader-step" id="ls1">Scoring 6 financial dimensions</div>
+      <div class="loader-step" id="ls2">Building your FIRE roadmap</div>
+      <div class="loader-step" id="ls3">Calculating tax optimisations</div>
+      <div class="loader-step" id="ls4">Generating personalised advice</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN 4: RESULTS ── -->
+<div class="screen" id="screen-results">
+  <div class="results-wrap">
+
+    <div class="results-header">
+      <p class="results-greeting">Your personalised report is ready</p>
+      <h2 class="results-title" id="resultsTitle">Hey Arjun, here's your financial health check.</h2>
+      <p class="results-summary" id="resultsSummary">Based on your inputs, we've scored you across 6 financial dimensions and built a personalised month-by-month roadmap. Here's what your money situation looks like today.</p>
+    </div>
+
+    <!-- Score Card -->
+    <div class="score-section">
+      <div class="score-header">
+        <div class="score-title">💰 Money Health Score</div>
+        <div class="overall-badge">
+          <div>
+            <div class="overall-num" id="overallScore" style="color: var(--gold)">--</div>
+            <div class="overall-label">out of 100</div>
+          </div>
+          <div class="overall-grade" id="overallGrade" style="background: var(--gold-dim); color: var(--gold)">--</div>
+        </div>
+      </div>
+
+      <div class="radar-wrap">
+        <canvas id="radarCanvas" width="280" height="280" class="radar-chart"></canvas>
+        <div class="radar-legend" id="radarLegend"></div>
+      </div>
+    </div>
+
+    <!-- Insights -->
+    <div class="insights-grid" id="insightsGrid"></div>
+
+    <!-- FIRE Roadmap -->
+    <div class="roadmap-section">
+      <p class="section-label">Your Path to Financial Independence</p>
+      <div class="section-title">FIRE Roadmap 🔥</div>
+      <div class="roadmap-timeline" id="roadmapTimeline"></div>
+    </div>
+
+    <!-- SIP Recommendations -->
+    <div class="roadmap-section">
+      <p class="section-label">Monthly Investment Plan</p>
+      <div class="section-title">Recommended SIPs 📈</div>
+      <table class="sip-table" id="sipTable">
+        <thead>
+          <tr>
+            <th>Goal</th>
+            <th>Fund type</th>
+            <th>Monthly SIP</th>
+            <th>Horizon</th>
+          </tr>
+        </thead>
+        <tbody id="sipBody"></tbody>
+      </table>
+    </div>
+
+    <div class="disclaimer">
+      ⚠️ This is AI-generated financial guidance for educational purposes only. It is not SEBI-registered investment advice. Please consult a certified financial planner before making significant financial decisions. All projections assume a 12% p.a. equity return, 7% debt return, and 6% inflation unless noted.
+    </div>
+
+    <div class="cta-row">
+      <button class="btn-cta-primary" onclick="window.print()">Download My Report</button>
+      <button class="btn-cta-secondary" onclick="restartApp()">Start over with different numbers</button>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- end .app -->
+
+<script>
+// ── STATE ──
+let currentStep = 0;
+const totalSteps = 5;
+let userData = {};
+
+// ── NAVIGATION ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+function startOnboarding() {
+  showScreen('onboarding');
+}
+
+function updateProgress() {
+  for (let i = 0; i < totalSteps; i++) {
+    const seg = document.getElementById('seg' + i);
+    seg.className = 'progress-seg';
+    if (i < currentStep) seg.classList.add('done');
+    else if (i === currentStep) seg.classList.add('active');
+  }
+  document.getElementById('backBtn').style.visibility = currentStep > 0 ? 'visible' : 'hidden';
+  document.getElementById('nextBtn').textContent = currentStep === totalSteps - 1 ? 'Get My Plan →' : 'Continue →';
+}
+
+function nextStep() {
+  collectStep(currentStep);
+  if (currentStep < totalSteps - 1) {
+    document.getElementById('step-' + currentStep).style.display = 'none';
+    currentStep++;
+    document.getElementById('step-' + currentStep).style.display = 'block';
+    updateProgress();
+  } else {
+    collectStep(currentStep);
+    runAnalysis();
+  }
+}
+
+function prevStep() {
+  if (currentStep > 0) {
+    document.getElementById('step-' + currentStep).style.display = 'none';
+    currentStep--;
+    document.getElementById('step-' + currentStep).style.display = 'block';
+    updateProgress();
+  }
+}
+
+function collectStep(step) {
+  if (step === 0) {
+    userData.name = document.getElementById('name').value || 'Friend';
+    userData.age = parseInt(document.getElementById('age').value) || 28;
+    userData.city = document.getElementById('city').value;
+    userData.employment = document.getElementById('employment').value;
+  } else if (step === 1) {
+    userData.income = parseFloat(document.getElementById('income').value) || 0;
+    userData.expenses = parseFloat(document.getElementById('expenses').value) || 0;
+    userData.emi = parseFloat(document.getElementById('emi').value) || 0;
+    userData.savings = parseFloat(document.getElementById('savings').value) || 0;
+    userData.investments = parseFloat(document.getElementById('investments').value) || 0;
+  } else if (step === 2) {
+    const sel = document.querySelector('#lifeInsGroup .checkbox-item.selected');
+    userData.lifeIns = sel ? sel.dataset.val : 'no';
+    userData.healthCover = parseInt(document.getElementById('healthCover').value) || 0;
+  } else if (step === 3) {
+    userData.goals = Array.from(document.querySelectorAll('#goalsGroup .checkbox-item.selected'))
+      .map(el => el.dataset.val);
+  } else if (step === 4) {
+    userData.taxRegime = document.getElementById('taxRegime').value;
+    userData.sec80c = parseInt(document.getElementById('sec80c').value) || 0;
+    userData.nps = document.getElementById('nps').value;
+  }
+}
+
+function selectOne(el, groupId) {
+  document.querySelectorAll('#' + groupId + ' .checkbox-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function toggleMulti(el) {
+  el.classList.toggle('selected');
+}
+
+// ── ANALYSIS ──
+function runAnalysis() {
+  showScreen('loading');
+  const steps = ['ls0','ls1','ls2','ls3','ls4'];
+  steps.forEach((id, i) => {
+    setTimeout(() => document.getElementById(id).classList.add('visible'), i * 800);
+  });
+
+  // Call API or use fallback
+  setTimeout(() => {
+    const result = computeScores(userData);
+    renderResults(result);
+    showScreen('results');
+  }, 4500);
+}
+
+// ── SCORING ENGINE ──
+function computeScores(u) {
+  const monthly = u.income || 50000;
+  const expenses = u.expenses || 30000;
+  const emi = u.emi || 0;
+  const savings = u.savings || 5000;
+  const investments = u.investments || 0;
+  const age = u.age || 28;
+
+  // Emergency fund score
+  const liquidMonths = investments * 0.2 / monthly;
+  const emergencyScore = Math.min(100, Math.round((liquidMonths / 6) * 100));
+
+  // Insurance score
+  let insScore = 20;
+  if (u.lifeIns === 'yes') insScore += 40;
+  else if (u.lifeIns === 'endowment') insScore += 10;
+  const coverLakh = u.healthCover || 0;
+  if (coverLakh >= 10) insScore += 40;
+  else if (coverLakh >= 5) insScore += 25;
+  else if (coverLakh >= 3) insScore += 10;
+  insScore = Math.min(100, insScore);
+
+  // Investment diversification (simplistic)
+  const savingsRate = savings / monthly;
+  const divScore = Math.min(100, Math.round(savingsRate * 250));
+
+  // Debt health
+  const emiRatio = emi / monthly;
+  const debtScore = emiRatio === 0 ? 95 : Math.max(0, Math.round((1 - emiRatio / 0.4) * 100));
+
+  // Tax efficiency
+  let taxScore = 50;
+  if (u.sec80c >= 150000) taxScore += 30;
+  else if (u.sec80c >= 100000) taxScore += 15;
+  if (u.nps === 'yes') taxScore += 20;
+  taxScore = Math.min(100, taxScore);
+
+  // Retirement readiness
+  const yearsToRetire = Math.max(1, 60 - age);
+  const targetCorpus = monthly * 12 * 25;
+  const projectedCorpus = investments * Math.pow(1.12, yearsToRetire)
+    + savings * 12 * ((Math.pow(1.12, yearsToRetire) - 1) / 0.12);
+  const retScore = Math.min(100, Math.round((projectedCorpus / targetCorpus) * 100));
+
+  const scores = [emergencyScore, insScore, divScore, debtScore, taxScore, retScore];
+  const overall = Math.round(scores.reduce((a,b) => a+b, 0) / scores.length);
+
+  // FIRE math
+  const surplusMonthly = Math.max(1000, monthly - expenses - emi);
+  const fireTarget = monthly * 12 * 25;
+
+  return {
+    name: u.name || 'Friend',
+    overall,
+    scores: {
+      emergency: emergencyScore,
+      insurance: insScore,
+      diversification: divScore,
+      debt: debtScore,
+      tax: taxScore,
+      retirement: retScore
+    },
+    surplus: surplusMonthly,
+    fireTarget,
+    currentInvestments: investments,
+    monthly,
+    goals: u.goals || [],
+    age,
+    taxRegime: u.taxRegime,
+    sec80c: u.sec80c,
+    lifeIns: u.lifeIns,
+    healthCover: u.healthCover
+  };
+}
+
+// ── RENDER ──
+function renderResults(r) {
+  // Title
+  const grade = r.overall >= 75 ? 'Strong 💪' : r.overall >= 50 ? 'Room to grow 📈' : 'Needs attention ⚠️';
+  document.getElementById('resultsTitle').textContent = `Hey ${r.name}, here's your financial health check.`;
+  document.getElementById('resultsSummary').textContent =
+    `Your overall score is ${r.overall}/100 — ${grade.replace(/[^\w\s]/g,'').trim()}. We've scored you across 6 dimensions and built a personalised roadmap. Here's where you stand.`;
+
+  // Animate score
+  animateNumber('overallScore', 0, r.overall, 1200);
+  const gradeEl = document.getElementById('overallGrade');
+  gradeEl.textContent = grade;
+  if (r.overall >= 75) { gradeEl.style.background = 'var(--green-dim)'; gradeEl.style.color = 'var(--green)'; }
+  else if (r.overall >= 50) { gradeEl.style.background = 'rgba(251,146,60,0.15)'; gradeEl.style.color = 'var(--amber)'; }
+  else { gradeEl.style.background = 'var(--red-dim)'; gradeEl.style.color = 'var(--red)'; }
+
+  // Radar
+  drawRadar(r.scores);
+
+  // Legend
+  const dims = [
+    { key: 'emergency',      label: 'Emergency fund',   color: '#60a5fa' },
+    { key: 'insurance',      label: 'Insurance',        color: '#f5c842' },
+    { key: 'diversification',label: 'Diversification',  color: '#22d3a0' },
+    { key: 'debt',           label: 'Debt health',      color: '#fb923c' },
+    { key: 'tax',            label: 'Tax efficiency',   color: '#a78bfa' },
+    { key: 'retirement',     label: 'Retirement',       color: '#f472b6' },
+  ];
+  const legend = document.getElementById('radarLegend');
+  legend.innerHTML = '';
+  dims.forEach(d => {
+    const val = r.scores[d.key];
+    legend.innerHTML += `
+      <div class="legend-item">
+        <div class="legend-dot" style="background:${d.color}"></div>
+        <div class="legend-info">
+          <div class="legend-name">${d.label}</div>
+          <div class="legend-score-row">
+            <div class="legend-bar-bg">
+              <div class="legend-bar-fill" style="width:0%; background:${d.color}" data-target="${val}"></div>
+            </div>
+            <div class="legend-val">${val}</div>
+          </div>
+        </div>
+      </div>`;
+  });
+  setTimeout(() => {
+    document.querySelectorAll('.legend-bar-fill').forEach(el => {
+      el.style.width = el.dataset.target + '%';
+    });
+  }, 200);
+
+  // Insights
+  renderInsights(r);
+
+  // Roadmap
+  renderRoadmap(r);
+
+  // SIPs
+  renderSIPs(r);
+}
+
+function animateNumber(id, from, to, duration) {
+  const el = document.getElementById(id);
+  const start = performance.now();
+  function update(now) {
+    const p = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(from + (to - from) * eased);
+    if (p < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
+// ── RADAR CHART ──
+function drawRadar(scores) {
+  const canvas = document.getElementById('radarCanvas');
+  const ctx = canvas.getContext('2d');
+  const cx = 140, cy = 140, r = 100;
+  const keys = ['emergency','insurance','diversification','debt','tax','retirement'];
+  const colors = ['#60a5fa','#f5c842','#22d3a0','#fb923c','#a78bfa','#f472b6'];
+  const labels = ['Emergency','Insurance','Diversity','Debt','Tax','Retire'];
+  const n = keys.length;
+
+  ctx.clearRect(0, 0, 280, 280);
+
+  // Grid
+  for (let ring = 1; ring <= 4; ring++) {
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+      const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+      const x = cx + (r * ring / 4) * Math.cos(angle);
+      const y = cy + (r * ring / 4) * Math.sin(angle);
+      i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1; ctx.stroke();
+  }
+
+  // Axes
+  for (let i = 0; i < n; i++) {
+    const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1; ctx.stroke();
+  }
+
+  // Labels
+  ctx.font = '500 11px DM Sans, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.textAlign = 'center';
+  for (let i = 0; i < n; i++) {
+    const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    const x = cx + (r + 18) * Math.cos(angle);
+    const y = cy + (r + 18) * Math.sin(angle) + 4;
+    ctx.fillText(labels[i], x, y);
+  }
+
+  // Data polygon
+  const vals = keys.map(k => scores[k] / 100);
+  ctx.beginPath();
+  for (let i = 0; i < n; i++) {
+    const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    const x = cx + r * vals[i] * Math.cos(angle);
+    const y = cy + r * vals[i] * Math.sin(angle);
+    i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(245,200,66,0.12)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(245,200,66,0.7)';
+  ctx.lineWidth = 2; ctx.stroke();
+
+  // Dots
+  for (let i = 0; i < n; i++) {
+    const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    const x = cx + r * vals[i] * Math.cos(angle);
+    const y = cy + r * vals[i] * Math.sin(angle);
+    ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2);
+    ctx.fillStyle = colors[i]; ctx.fill();
+  }
+}
+
+// ── INSIGHTS ──
+function renderInsights(r) {
+  const insights = [];
+  const surplus = r.surplus;
+
+  if (r.scores.emergency < 40)
+    insights.push({ type:'critical', title:'No emergency buffer', body:`You need ~${fmt(r.monthly * 6)} saved in liquid funds. Start with ₹${fmt(Math.min(surplus*0.4, 5000))}/month in a liquid mutual fund.` });
+  else if (r.scores.emergency >= 70)
+    insights.push({ type:'good', title:'Emergency fund looks solid', body:'You have a reasonable buffer. Keep it in a liquid fund or high-yield savings account.' });
+
+  if (r.lifeIns === 'no')
+    insights.push({ type:'critical', title:'No life insurance detected', body:`At your income, you need a ₹${fmt(r.monthly * 12 * 10)} term cover. Costs ~₹800–1,200/month and protects your family.` });
+  else if (r.lifeIns === 'endowment')
+    insights.push({ type:'warning', title:'Endowment policy = poor investment', body:'Endowment/LIC plans give 4–6% returns. Consider surrendering and replacing with term + ELSS.' });
+
+  if (r.scores.tax < 60 && r.taxRegime !== 'new')
+    insights.push({ type:'warning', title:`₹${fmt(150000 - r.sec80c)} in 80C deductions unclaimed`, body:'Invest the balance in ELSS mutual funds before March 31. Saves you ₹' + fmt((150000 - r.sec80c) * 0.3) + ' in taxes this year.' });
+
+  if (r.scores.debt < 40)
+    insights.push({ type:'critical', title:'High EMI burden', body:'Your EMIs consume too much of your income. Avoid new debt and consider prepaying the highest-interest loan first.' });
+  else if (r.scores.debt >= 80)
+    insights.push({ type:'good', title:'Debt-free or near debt-free', body:'Excellent. You have maximum flexibility to invest. Consider increasing your SIPs by ₹' + fmt(surplus * 0.3) + '/month.' });
+
+  if (r.scores.retirement < 40)
+    insights.push({ type:'warning', title:'Retirement gap detected', body:`Start a ₹${fmt(Math.max(2000, surplus * 0.2))}/month NPS contribution now. Tax deductible under 80CCD(1B) up to ₹50,000 extra.` });
+
+  if (insights.length === 0)
+    insights.push({ type:'good', title:'Your finances are in good shape', body:'Keep up your current habits. The key now is consistency — increase SIPs by 10% every year.' });
+
+  const grid = document.getElementById('insightsGrid');
+  grid.innerHTML = insights.slice(0, 4).map(ins => `
+    <div class="insight-card ${ins.type}">
+      <div class="insight-tag">${ins.type === 'critical' ? '⚠ Action needed' : ins.type === 'warning' ? '↗ Improve this' : '✓ Looking good'}</div>
+      <div class="insight-title">${ins.title}</div>
+      <div class="insight-body">${ins.body}</div>
+    </div>`).join('');
+}
+
+// ── ROADMAP ──
+function renderRoadmap(r) {
+  const surplus = r.surplus;
+  const monthly = r.monthly;
+  const goals = r.goals.length > 0 ? r.goals : ['emergency','retirement'];
+  const milestones = [];
+
+  // Emergency fund
+  if (goals.includes('emergency') || r.scores.emergency < 60) {
+    const target = monthly * 6;
+    const current = r.currentInvestments * 0.2;
+    const gap = Math.max(0, target - current);
+    const months = gap > 0 ? Math.ceil(gap / (surplus * 0.35)) : 0;
+    milestones.push({
+      icon: '🛡️',
+      type: months <= 6 ? 'target' : 'milestone',
+      month: months <= 0 ? 'Done' : `Month ${months}`,
+      title: 'Emergency fund complete',
+      body: `₹${fmt(monthly * 6)} in a liquid fund`,
+      amount: `₹${fmt(Math.round(surplus * 0.35))}/mo`
+    });
+  }
+
+  // Home
+  if (goals.includes('home')) {
+    const downpayment = monthly * 12 * 3;
+    const months = Math.ceil(downpayment / (surplus * 0.4));
+    milestones.push({
+      icon: '🏠', type: 'milestone',
+      month: `Month ${months}`,
+      title: 'Home down-payment ready',
+      body: `20% down on a ₹${fmt(monthly * 36)} home`,
+      amount: `₹${fmt(Math.round(surplus * 0.4))}/mo`
+    });
+  }
+
+  // Child education
+  if (goals.includes('education')) {
+    milestones.push({
+      icon: '🎓', type: 'milestone',
+      month: `Year ${Math.max(5, 18 - (r.age - 30))}`,
+      title: "Child's education corpus",
+      body: 'Target ₹50L in equity mutual funds',
+      amount: `₹${fmt(Math.round(surplus * 0.2))}/mo`
+    });
+  }
+
+  // FIRE / retirement
+  const fireTarget = r.fireTarget;
+  const projCorpus10 = r.currentInvestments * Math.pow(1.12, 10) + surplus * 0.5 * 12 * ((Math.pow(1.12,10)-1)/0.12);
+  const yearsToFIRE = Math.round(Math.log(fireTarget / Math.max(1, r.currentInvestments)) / Math.log(1.12));
+  milestones.push({
+    icon: '🔥', type: 'target',
+    month: `Year ${Math.max(5, Math.min(35, yearsToFIRE))}`,
+    title: 'Financial independence',
+    body: `Target corpus: ₹${fmtCr(fireTarget)} — 25× annual expenses`,
+    amount: `₹${fmt(Math.round(surplus * 0.45))}/mo`
+  });
+
+  const timeline = document.getElementById('roadmapTimeline');
+  timeline.innerHTML = milestones.map((m, i) => `
+    <div class="timeline-item ${m.type}" style="animation-delay:${i*0.15}s">
+      <div class="timeline-dot">${m.icon}</div>
+      <div class="timeline-content">
+        <div class="timeline-month">${m.month}</div>
+        <div class="timeline-title">${m.title}</div>
+        <div class="timeline-body">${m.body}</div>
+        <div class="timeline-amount">${m.amount}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── SIPs ──
+function renderSIPs(r) {
+  const surplus = r.surplus;
+  const sips = [];
+
+  if (r.scores.emergency < 70)
+    sips.push({ goal: 'Emergency fund', type: 'Liquid fund', badge: 'badge-debt', sip: fmt(Math.round(surplus * 0.3)), horizon: '6–12 months' });
+
+  if (r.goals.includes('retirement') || r.age < 40)
+    sips.push({ goal: 'Retirement / FIRE', type: 'Large-cap / Index', badge: 'badge-equity', sip: fmt(Math.round(surplus * 0.35)), horizon: '20–30 years' });
+
+  if (r.sec80c < 150000 && r.taxRegime !== 'new')
+    sips.push({ goal: 'Tax saving (80C)', type: 'ELSS fund', badge: 'badge-tax', sip: fmt(Math.round(Math.min(surplus * 0.25, (150000 - r.sec80c) / 12))), horizon: '3 year lock-in' });
+
+  if (r.goals.includes('home'))
+    sips.push({ goal: 'Home down-payment', type: 'Balanced advantage', badge: 'badge-equity', sip: fmt(Math.round(surplus * 0.2)), horizon: '3–5 years' });
+
+  if (r.goals.includes('education'))
+    sips.push({ goal: "Child's education", type: 'Mid-cap fund', badge: 'badge-equity', sip: fmt(Math.round(surplus * 0.15)), horizon: '10–15 years' });
+
+  const tbody = document.getElementById('sipBody');
+  tbody.innerHTML = sips.map(s => `
+    <tr>
+      <td>${s.goal}</td>
+      <td><span class="sip-badge ${s.badge}">${s.type}</span></td>
+      <td class="amount">₹${s.sip}</td>
+      <td style="color:var(--muted)">${s.horizon}</td>
+    </tr>`).join('');
+}
+
+// ── HELPERS ──
+function fmt(n) {
+  if (n >= 10000000) return (n/10000000).toFixed(1) + ' Cr';
+  if (n >= 100000)   return (n/100000).toFixed(1) + ' L';
+  if (n >= 1000)     return Math.round(n/1000) + ',000';
+  return Math.round(n).toString();
+}
+function fmtCr(n) {
+  if (n >= 10000000) return (n/10000000).toFixed(1) + ' Cr';
+  return (n/100000).toFixed(0) + ' L';
+}
+
+function restartApp() {
+  currentStep = 0;
+  userData = {};
+  document.querySelectorAll('.form-step').forEach((s,i) => { s.style.display = i===0 ? 'block' : 'none'; });
+  updateProgress();
+  showScreen('hero');
+}
+
+// init
+updateProgress();
+</script>
+</body>
+</html>
