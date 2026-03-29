@@ -974,6 +974,16 @@
           <p class="hero-proof">
             No sign-up. No data sold. Your numbers stay on your device.
           </p>
+          <p
+            style="
+              margin-top: 32px;
+              font-size: 13px;
+              color: #454f69;
+              letter-spacing: 1px;
+            "
+          >
+            crafted by <span style="color: #f5c842">Vishwa</span>
+          </p>
         </div>
       </div>
 
@@ -1792,7 +1802,7 @@
             .map(
               (m, i) =>
                 `<div class="timeline-item ${m.type || "milestone"}" style="animation-delay:${i * 0.15}s">
-        <div class="timeline-dot">${m.icon || "📅"}</div>
+        <div class="timeline-dot">${i + 1}</div>
         <div class="timeline-content">
           <div class="timeline-month">${m.timeline || ""}</div>
           <div class="timeline-title">${m.title}</div>
