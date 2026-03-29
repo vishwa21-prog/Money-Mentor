@@ -16,7 +16,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-client = Groq(api_key=os.environ.get("GROQ_API_KEY", "insert your groq api key here"))
+client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 class UserProfile(BaseModel):
     name: str = "Friend"
